@@ -1,0 +1,49 @@
+#include <SPI.h>
+#include <LoRa.h>
+
+// Definição explícita dos pinos (DEVE ser idêntica à pinagem física usada no transmissor)
+#define SCK     5
+#define MISO    19
+#define MOSI    27
+#define SS      18
+#define RST     14
+#define DIO0    26
+
+int counter = 0;
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial);
+
+  Serial.println("LoRa Sender");
+
+  // Sobrescreve os pinos padrão do SPI para evitar conflitos com a Flash
+  SPI.begin(SCK, MISO, MOSI, SS);
+  LoRa.setPins(SS, RST, DIO0);
+
+  if (!LoRa.begin(915E6)) {
+    Serial.println("Starting LoRa failed!");
+    
+    // Proteção contra Watchdog em caso de falha de fiação no transmissor
+    while (1) {
+      delay(10);
+    }
+  }
+  
+  Serial.println("LoRa Inicializado com Sucesso no Transmissor!");
+}
+
+void loop() {
+  Serial.print("Sending packet: ");
+  Serial.println(counter);
+
+  // Envio do pacote de RF
+  LoRa.beginPacket();
+  LoRa.print("hello ");
+  LoRa.print(counter);
+  LoRa.endPacket();
+
+  counter++;
+
+  delay(5000);
+}
